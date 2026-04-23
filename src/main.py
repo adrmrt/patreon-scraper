@@ -20,8 +20,10 @@ def main():
 
         artists = load_artists(Config.ARTIST_FILE_PATH)
         for artist in artists:
-            print(f"Scraping posts for artist: {artist['display_name']} ({artist['url_name']})")
-            url = f"https://www.patreon.com/c/{artist["url_name"]}/posts"
+            print(
+                f"Scraping posts for artist: {artist['display_name']} ({artist['url_name']})"
+            )
+            url = f"https://www.patreon.com/c/{artist['url_name']}/posts"
             driver.get(url)
 
             wait_for_user_to_dismiss_consent()
@@ -47,7 +49,9 @@ def wait_for_user_to_dismiss_consent():
     Waits for the user to manually dismiss the consent dialog.
     The user must press Enter to continue the script.
     """
-    input("Please dismiss the consent dialog (click the 'Reject non-essential' button) and press Enter to continue...")
+    input(
+        "Please dismiss the consent dialog (click the 'Reject non-essential' button) and press Enter to continue..."
+    )
     print("Continuing script execution...")
 
 

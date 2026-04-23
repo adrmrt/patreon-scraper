@@ -15,12 +15,12 @@ def login(driver):
     driver.get("https://www.patreon.com/login")
 
     # Enter email
-    WebDriverWait(driver, 10).until(ec.presence_of_element_located(EMAIL_INPUT)).send_keys(Config.EMAIL)
+    WebDriverWait(driver, 10).until(
+        ec.presence_of_element_located(EMAIL_INPUT)
+    ).send_keys(Config.EMAIL)
 
     # Click continue button
-    WebDriverWait(driver, 10).until(
-        ec.element_to_be_clickable(CONTINUE_BUTTON)
-    ).click()
+    WebDriverWait(driver, 10).until(ec.element_to_be_clickable(CONTINUE_BUTTON)).click()
 
     # Enter password
     password_input = WebDriverWait(driver, 10).until(
@@ -31,5 +31,7 @@ def login(driver):
 
     # Click continue to login
     WebDriverWait(driver, 10).until(
-        ec.element_to_be_clickable((By.XPATH, "//div[text()='Continue']/ancestor::button"))
+        ec.element_to_be_clickable(
+            (By.XPATH, "//div[text()='Continue']/ancestor::button")
+        )
     ).click()

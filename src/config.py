@@ -16,6 +16,7 @@ class Config:
     GeckoDriver binaries. It ensures that all required variables are set and the specified
     paths exist in the file system.
     """
+
     EMAIL: str = os.getenv("EMAIL")
     PASSWORD: str = os.getenv("PASSWORD")
     FIREFOX_PATH: Path = Path(os.getenv("FIREFOX_PATH", ""))
@@ -40,7 +41,7 @@ class Config:
     @staticmethod
     def _validate_env_vars():
         """
-         Validate essential environment variables.
+        Validate essential environment variables.
         """
         if not Config.EMAIL or not Config.PASSWORD:
             raise ValueError("Both EMAIL and PASSWORD must be set in the .env file.")
@@ -51,13 +52,19 @@ class Config:
         Validate file paths and ensure they exist.
         """
         if not Config.FIREFOX_PATH.exists():
-            raise FileNotFoundError(f"FIREFOX_PATH does not exist: {Config.FIREFOX_PATH}")
+            raise FileNotFoundError(
+                f"FIREFOX_PATH does not exist: {Config.FIREFOX_PATH}"
+            )
 
         if not Config.GECKO_DRIVER_PATH.exists():
-            raise FileNotFoundError(f"GECKO_DRIVER_PATH does not exist: {Config.GECKO_DRIVER_PATH}")
+            raise FileNotFoundError(
+                f"GECKO_DRIVER_PATH does not exist: {Config.GECKO_DRIVER_PATH}"
+            )
 
         if not Config.EXAMPLE_FILE_PATH.exists():
-            raise FileNotFoundError(f"EXAMPLE_FILE_PATH does not exist: {Config.EXAMPLE_FILE_PATH}")
+            raise FileNotFoundError(
+                f"EXAMPLE_FILE_PATH does not exist: {Config.EXAMPLE_FILE_PATH}"
+            )
 
     @staticmethod
     def ensure_artists_file():
@@ -70,8 +77,11 @@ class Config:
             print(f"{Config.ARTIST_FILE_PATH} was not found.")
             print(
                 f"A copy of {Config.EXAMPLE_FILE_PATH} has been created as "
-                f"{Config.ARTIST_FILE_PATH}.")
-            print(f"Please update {Config.ARTIST_FILE_PATH} with your artist information.")
+                f"{Config.ARTIST_FILE_PATH}."
+            )
+            print(
+                f"Please update {Config.ARTIST_FILE_PATH} with your artist information."
+            )
 
     @staticmethod
     def ensure_output_folder():

@@ -136,7 +136,9 @@ def save_posts_to_file(posts, output_folder: Path):
             try:
                 existing_posts = json.load(file)
             except json.JSONDecodeError:
-                print(f"Warning: Could not decode JSON from {posts_file}, starting fresh.")
+                print(
+                    f"Warning: Could not decode JSON from {posts_file}, starting fresh."
+                )
 
     # Append only new posts (based on unique ID)
     existing_post_ids = {post["id"] for post in existing_posts}

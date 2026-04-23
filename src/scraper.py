@@ -36,15 +36,20 @@ def scrape_artist_posts(driver, artist):
 
             # Wait for posts to load
             WebDriverWait(driver, 10).until(
-                ec.presence_of_all_elements_located((By.XPATH, "//div[@data-tag='post-card']"))
+                ec.presence_of_all_elements_located(
+                    (By.XPATH, "//div[@data-tag='post-card']")
+                )
             )
 
             # Extract all visible post elements
-            post_elements = driver.find_elements(By.XPATH, "//div[@data-tag='post-card']")
+            post_elements = driver.find_elements(
+                By.XPATH, "//div[@data-tag='post-card']"
+            )
 
             # Filter out elements with IDs that have already been seen
             new_elements = [
-                post for post in post_elements
+                post
+                for post in post_elements
                 if extract_post_id(post) not in seen_post_ids
             ]
 
@@ -52,9 +57,9 @@ def scrape_artist_posts(driver, artist):
             for post in new_elements:
                 post_data = extract_post_data(post, artist)
                 if post_data and post_data["id"] not in seen_post_ids:
-                    print(f"Processed post {post_data["id"]} - {post_data["title"]}")
+                    print(f"Processed post {post_data['id']} - {post_data['title']}")
                     if Config.DEBUG:
-                        print(f"Found {len(post_data["images"])} images.")
+                        print(f"Found {len(post_data['images'])} images.")
 
                     seen_post_ids.add(post_data["id"])
                     new_posts.append(post_data)
@@ -78,17 +83,26 @@ def click_load_more(driver):
     :return: True if the button was clicked, False otherwise.
     """
     try:
-        initial_post_count = len(driver.find_elements(By.XPATH, "//div[@data-tag='post-card']"))
+        initial_post_count = len(
+            driver.find_elements(By.XPATH, "//div[@data-tag='post-card']")
+        )
 
-        load_more_button = driver.find_element(By.XPATH,
-                                               "//button[@type='button' and not(@aria-disabled='true') and .//div[text()='Load more']]")
+        load_more_button = driver.find_element(
+            By.XPATH,
+            "//button[@type='button' and not(@aria-disabled='true') and .//div[text()='Load more']]",
+        )
         if load_more_button.is_displayed():
-            driver.execute_script("arguments[0].scrollIntoView(true);", load_more_button)
+            driver.execute_script(
+                "arguments[0].scrollIntoView(true);", load_more_button
+            )
             load_more_button.click()
 
             # Wait for the number of posts to increase
             WebDriverWait(driver, 10).until(
-                lambda d: len(d.find_elements(By.XPATH, "//div[@data-tag='post-card']")) > initial_post_count
+                lambda d: (
+                    len(d.find_elements(By.XPATH, "//div[@data-tag='post-card']"))
+                    > initial_post_count
+                )
             )
             return True
     except (NoSuchElementException, TimeoutException, ElementClickInterceptedException):
@@ -114,11 +128,20 @@ def extract_post_data(post_element, artist):
 
         images = extract_image_urls(post_element)
 
-        url = get_element_attribute(post_element, ".//span[@data-tag='post-title']/a", "href")
+        url = get_element_attribute(
+            post_element, ".//span[@data-tag='post-title']/a", "href"
+        )
         post_id = int(url.split("-")[-1])
 
-        return {"id": post_id, "title": title, "date": date, "content": content, "images": images, "tags": tags,
-                "url": url}
+        return {
+            "id": post_id,
+            "title": title,
+            "date": date,
+            "content": content,
+            "images": images,
+            "tags": tags,
+            "url": url,
+        }
 
     except StaleElementReferenceException:
         pass
@@ -135,7 +158,9 @@ def expand_post_content(post_element):
     :param post_element: WebElement representing a post.
     """
     try:
-        show_more_button = post_element.find_element(By.XPATH, ".//button[contains(text(), 'Show more')]")
+        show_more_button = post_element.find_element(
+            By.XPATH, ".//button[contains(text(), 'Show more')]"
+        )
         if show_more_button.is_displayed():
             for _ in range(2):
                 try:
@@ -176,8 +201,9 @@ def extract_post_date(post_element):
     :param post_element: WebElement representing a post.
     :return: str The date or None if not found.
     """
-    raw_date = get_element_text(post_element, ".//a[@data-tag='post-published-at']/span/span") or \
-               get_element_text(post_element, ".//a[@data-tag='post-published-at']/span")
+    raw_date = get_element_text(
+        post_element, ".//a[@data-tag='post-published-at']/span/span"
+    ) or get_element_text(post_element, ".//a[@data-tag='post-published-at']/span")
 
     return parse_date(raw_date)
 
@@ -205,7 +231,9 @@ def extract_post_text(post_element):
     :param post_element: WebElement representing a post.
     :returns: str Combined text content from all paragraphs.
     """
-    paragraphs = post_element.find_elements(By.XPATH, ".//div[@class='sc-b20d4e5f-0 jOibYJ']/p")
+    paragraphs = post_element.find_elements(
+        By.XPATH, ".//div[@class='sc-b20d4e5f-0 jOibYJ']/p"
+    )
     return "\n".join(paragraph.text.strip() for paragraph in paragraphs)
 
 
@@ -245,8 +273,12 @@ def extract_image_urls(post_element):
     :returns: list A list of image URLs or an empty list if none are found.
     """
     try:
-        image_grid = post_element.find_elements(By.XPATH, ".//div[contains(@class, 'image-grid')]//img")
-        image_carousel = post_element.find_elements(By.XPATH, ".//div[contains(@class, 'image-carousel')]//img")
+        image_grid = post_element.find_elements(
+            By.XPATH, ".//div[contains(@class, 'image-grid')]//img"
+        )
+        image_carousel = post_element.find_elements(
+            By.XPATH, ".//div[contains(@class, 'image-carousel')]//img"
+        )
 
         all_image_elements = image_grid + image_carousel
 
@@ -265,7 +297,9 @@ def extract_post_id(post_element):
     :returns: str The unique ID of the post or None if not found.
     """
     try:
-        url = get_element_attribute(post_element, ".//span[@data-tag='post-title']/a", "href")
+        url = get_element_attribute(
+            post_element, ".//span[@data-tag='post-title']/a", "href"
+        )
         return int(url.split("-")[-1])
     except Exception:
         return None

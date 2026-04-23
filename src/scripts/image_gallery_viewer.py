@@ -5,9 +5,11 @@ from PIL import Image, ImageTk
 
 
 class ImageGallery:
-    SUPPORTED_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff')
+    SUPPORTED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff")
 
-    def __init__(self, root, image_dir, rows=5, cols=6, window_width=1000, window_height=900):
+    def __init__(
+        self, root, image_dir, rows=5, cols=6, window_width=1000, window_height=900
+    ):
         self.root = root
         self.image_dir = image_dir
         self.rows = rows
@@ -24,7 +26,9 @@ class ImageGallery:
         self.loaded_thumbnails = {}  # Cache for thumbnails
         self.open_windows = {}  # Track opened full-size image windows
 
-        self.total_pages = (len(self.image_files) + self.images_per_page - 1) // self.images_per_page
+        self.total_pages = (
+            len(self.image_files) + self.images_per_page - 1
+        ) // self.images_per_page
 
         self._setup_ui()
 
@@ -33,7 +37,8 @@ class ImageGallery:
         return [
             os.path.join(root, file)
             for root, _, files in os.walk(directory)
-            for file in files if file.lower().endswith(self.SUPPORTED_EXTENSIONS)
+            for file in files
+            if file.lower().endswith(self.SUPPORTED_EXTENSIONS)
         ]
 
     def _setup_ui(self):
@@ -44,7 +49,9 @@ class ImageGallery:
 
     def _setup_grid_frame(self):
         """Set up the frame for displaying image thumbnails."""
-        self.grid_frame = Frame(self.root, width=self.window_width, height=self.window_height)
+        self.grid_frame = Frame(
+            self.root, width=self.window_width, height=self.window_height
+        )
         self.grid_frame.pack_propagate(False)
         self.grid_frame.pack(fill="both", expand=True)
 
@@ -54,11 +61,19 @@ class ImageGallery:
         self.nav_frame.pack()
 
         # Navigation components
-        self.first_page_button = Button(self.nav_frame, text="<<", command=self._go_to_first_page)
-        self.prev_button = Button(self.nav_frame, text="<", command=self._go_to_prev_page)
+        self.first_page_button = Button(
+            self.nav_frame, text="<<", command=self._go_to_first_page
+        )
+        self.prev_button = Button(
+            self.nav_frame, text="<", command=self._go_to_prev_page
+        )
         self.page_label = Label(self.nav_frame, text="")
-        self.next_button = Button(self.nav_frame, text=">", command=self._go_to_next_page)
-        self.last_page_button = Button(self.nav_frame, text=">>", command=self.go_to_last_page)
+        self.next_button = Button(
+            self.nav_frame, text=">", command=self._go_to_next_page
+        )
+        self.last_page_button = Button(
+            self.nav_frame, text=">>", command=self.go_to_last_page
+        )
 
         # Pack components
         self.first_page_button.pack(side="left")
@@ -70,13 +85,19 @@ class ImageGallery:
     def _update_page(self):
         """Update the current page's content and navigation controls."""
         self._display_thumbnails()
-        self.page_label.config(text=f"Page {self.current_page + 1} of {self.total_pages}")
+        self.page_label.config(
+            text=f"Page {self.current_page + 1} of {self.total_pages}"
+        )
 
         # Update navigation button states
         self._update_button_state(self.first_page_button, self.current_page == 0)
         self._update_button_state(self.prev_button, self.current_page == 0)
-        self._update_button_state(self.next_button, self.current_page == self.total_pages - 1)
-        self._update_button_state(self.last_page_button, self.current_page == self.total_pages - 1)
+        self._update_button_state(
+            self.next_button, self.current_page == self.total_pages - 1
+        )
+        self._update_button_state(
+            self.last_page_button, self.current_page == self.total_pages - 1
+        )
 
     def _update_button_state(self, button, disabled):
         """Enable or disable a button."""
@@ -102,8 +123,16 @@ class ImageGallery:
             if thumbnail:
                 lbl = Label(self.grid_frame, image=thumbnail)
                 lbl.image = thumbnail  # Keep a reference to avoid garbage collection
-                lbl.grid(row=idx // self.cols, column=idx % self.cols, padx=5, pady=5, sticky="nsew")
-                lbl.bind("<Double-1>", lambda event, p=image_path: self._show_full_image(p))
+                lbl.grid(
+                    row=idx // self.cols,
+                    column=idx % self.cols,
+                    padx=5,
+                    pady=5,
+                    sticky="nsew",
+                )
+                lbl.bind(
+                    "<Double-1>", lambda event, p=image_path: self._show_full_image(p)
+                )
 
     def _get_thumbnail(self, image_path, size):
         """Create or retrieve a cached thumbnail for the given image path."""
@@ -165,7 +194,9 @@ class ImageGallery:
         window.geometry(f"{img_width}x{img_height}+{x}+{y}")
 
         # Handle window close
-        window.protocol("WM_DELETE_WINDOW", lambda: self._on_close_window(image_path, window))
+        window.protocol(
+            "WM_DELETE_WINDOW", lambda: self._on_close_window(image_path, window)
+        )
         return window
 
     def _go_to_first_page(self):

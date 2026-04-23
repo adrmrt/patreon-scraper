@@ -78,7 +78,9 @@ def parse_absolute_date(raw_date, today):
             month_day = datetime.strptime(raw_date, "%B %d")
             year = today.year
             # Adjust year if the month/day hasn't occurred yet this year
-            if month_day.month > today.month or (month_day.month == today.month and month_day.day > today.day):
+            if month_day.month > today.month or (
+                month_day.month == today.month and month_day.day > today.day
+            ):
                 year -= 1
             return datetime(year, month_day.month, month_day.day).strftime("%Y-%m-%d")
     except ValueError as ve:

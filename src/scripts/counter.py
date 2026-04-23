@@ -29,7 +29,7 @@ def count_posts_per_year(artist):
                 except ValueError:
                     print(f"Invalid date format for post: {date_str}")
 
-        print(f"Artist: {artist["display_name"]} ({artist["url_name"]})")
+        print(f"Artist: {artist['display_name']} ({artist['url_name']})")
         for year, count in sorted(year_count.items()):
             print(f"   {year}: {count} posts")
 

@@ -1,0 +1,16 @@
+[
+  {
+    "display_name": "Example Artist",
+    "url_name": "exampleartist",
+    "tag_mapping": [
+      {
+        "alias": [
+          "name 1",
+          "names",
+          "Name"
+        ],
+        "tag": "name"
+      }
+    ]
+  }
+]

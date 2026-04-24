@@ -236,9 +236,17 @@ def extract_post_text(post_element):
     :returns: str Combined text content from all paragraphs.
     """
     paragraphs = post_element.find_elements(
-        By.XPATH, ".//div[@class='sc-b20d4e5f-0 jOibYJ']/p"
+        By.XPATH, ".//div[contains(@class, 'patreon-post-content')]//p"
     )
-    return "\n".join(paragraph.text.strip() for paragraph in paragraphs)
+    logger.debug("extract_post_text: found %d paragraph(s).", len(paragraphs))
+
+    texts = []
+    for p in paragraphs:
+        text = p.text.strip() or p.get_attribute("textContent").strip()
+        if text:
+            texts.append(text)
+
+    return "\n".join(texts)
 
 
 def extract_post_tags(post_element, tags_mapping):

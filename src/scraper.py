@@ -11,7 +11,10 @@ from selenium.webdriver.support import expected_conditions as ec
 
 from src.config import Config
 from src.date_utils import parse_date
+from src.logger import get_logger
 from src.utils import download_post_images, save_posts_to_file
+
+logger = get_logger(__name__)
 
 
 def scrape_artist_posts(driver, artist):
@@ -57,9 +60,10 @@ def scrape_artist_posts(driver, artist):
             for post in new_elements:
                 post_data = extract_post_data(post, artist)
                 if post_data and post_data["id"] not in seen_post_ids:
-                    print(f"Processed post {post_data['id']} - {post_data['title']}")
-                    if Config.DEBUG:
-                        print(f"Found {len(post_data['images'])} images.")
+                    logger.info(
+                        "Processed post %s - %s", post_data["id"], post_data["title"]
+                    )
+                    logger.debug("Found %d images.", len(post_data["images"]))
 
                     seen_post_ids.add(post_data["id"])
                     new_posts.append(post_data)
@@ -70,9 +74,9 @@ def scrape_artist_posts(driver, artist):
             if not click_load_more(driver):
                 break
     except TimeoutException:
-        print("Timed out waiting for posts to load.")
+        logger.warning("Timed out waiting for posts to load.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error("An error occurred: %s", e)
 
 
 def click_load_more(driver):
@@ -246,7 +250,7 @@ def extract_post_tags(post_element, tags_mapping):
     :returns: list A list of tag strings.
     """
     raw_tags = post_element.find_elements(By.XPATH, ".//a[@data-tag='post-tag']")
-    raw_tags_texts = [tag.text.strip().lower() for tag in raw_tags]
+    raw_tags_texts = [tag.text.strip().lower() for tag in raw_tags if tag.text.strip()]
 
     # Normalize tags based on the tag mapping
     effective_tags = []

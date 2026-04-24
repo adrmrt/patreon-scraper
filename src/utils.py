@@ -1,15 +1,16 @@
 import json
 import re
-
 import aiohttp
 import asyncio
 from pathlib import Path
 from datetime import datetime
 
-from src.config import Config
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 
-def load_artists(file_path="artists.json"):
+def load_artists(file_path: Path) -> list[dict]:
     """
     Utility method to load artists from a JSON file.
 
@@ -35,14 +36,14 @@ def sanitize_filename(filename: str) -> str:
     return filename
 
 
-async def download_image(session, url, folder_path: Path):
+async def download_image(session, url: str, folder_path: Path) -> Path | None:
     """
-    Downloads an image from a URL and saves it to a specified folder with the given file name.
+    Downloads an image from a URL and saves it to a specified folder.
 
     :param session: An aiohttp ClientSession instance.
     :param url: The URL of the image to download.
     :param folder_path: The folder path where the image will be saved.
-    :return: The absolute path to the downloaded image.
+    :return: The absolute path to the downloaded image, or None on failure.
     """
     folder_path.mkdir(parents=True, exist_ok=True)
 
@@ -56,7 +57,7 @@ async def download_image(session, url, folder_path: Path):
                 else:
                     file_name = None
 
-                # Fallback to using the basename of URL
+                # Fallback to using the basename of the URL
                 if not file_name:
                     file_name = url.split("/")[-1]
 
@@ -65,29 +66,32 @@ async def download_image(session, url, folder_path: Path):
 
                 # Skip download if the file already exists
                 if file_path.exists():
+                    logger.debug("Skipping already downloaded file: %s", file_path)
                     return file_path
 
                 with open(file_path, "wb") as f:
                     f.write(await response.read())
+
+                logger.debug("Downloaded: %s -> %s", url, file_path)
                 return file_path
             else:
-                print(f"Failed to download {url}: {response.status}")
+                logger.warning("Failed to download %s: HTTP %s", url, response.status)
     except Exception as e:
-        print(f"Error downloading {url}: {e}")
+        logger.error("Error downloading %s: %s", url, e)
+
     return None
 
 
-async def download_post_images(posts, output_folder: Path):
+async def download_post_images(posts: list[dict], output_folder: Path) -> list[dict]:
     """
-    Download images for posts asynchronously and updates their image attributes.
+    Download images for posts asynchronously and update their image attributes.
 
     :param posts: A list of post dictionaries with a 'date' and 'images' attribute.
-    :param output_folder:
+    :param output_folder: Root output folder.
     :return: The list of posts with updated 'images' attributes.
     """
     async with aiohttp.ClientSession() as session:
-        if Config.DEBUG:
-            print(f"Output folder: {output_folder}")
+        logger.debug("Output folder: %s", output_folder)
 
         tasks = []
 
@@ -100,18 +104,16 @@ async def download_post_images(posts, output_folder: Path):
             for url in post["images"]:
                 tasks.append(download_image(session, url, folder_path))
 
-        # Gather all results
         downloaded_paths = await asyncio.gather(*tasks)
 
-        # Update post 'images' attributes
         index = 0
         for post in posts:
             updated_images = []
             for _ in post["images"]:
-                relative_path = Path(downloaded_paths[index]).relative_to(output_folder)
-                if Config.DEBUG:
-                    print(relative_path)
-                if relative_path:
+                path = downloaded_paths[index]
+                if path is not None:
+                    relative_path = Path(path).relative_to(output_folder)
+                    logger.debug("Relative image path: %s", relative_path)
                     updated_images.append(str(relative_path))
                 index += 1
             post["images"] = updated_images
@@ -119,33 +121,30 @@ async def download_post_images(posts, output_folder: Path):
     return posts
 
 
-def save_posts_to_file(posts, output_folder: Path):
+def save_posts_to_file(posts: list[dict], output_folder: Path) -> None:
     """
-    Save posts to a JSON file for the given artist by appending new data to existing data.
+    Save posts to a JSON file, appending only new entries.
 
     :param posts: List of post dictionaries.
     :param output_folder: Path to the output folder of the specific artist.
     """
     posts_file = output_folder / "posts.json"
+    existing_posts: list[dict] = []
 
-    existing_posts = []
-
-    # Load existing posts if the file exists
     if posts_file.exists():
         with open(posts_file, "r") as file:
             try:
                 existing_posts = json.load(file)
             except json.JSONDecodeError:
-                print(
-                    f"Warning: Could not decode JSON from {posts_file}, starting fresh."
+                logger.warning(
+                    "Could not decode JSON from %s, starting fresh.", posts_file
                 )
 
-    # Append only new posts (based on unique ID)
     existing_post_ids = {post["id"] for post in existing_posts}
     new_posts = [post for post in posts if post["id"] not in existing_post_ids]
     updated_posts = existing_posts + new_posts
 
-    # Save the updated list of posts
     with open(posts_file, "w") as file:
         json.dump(updated_posts, file, indent=4)
-    print(f"Appended {len(new_posts)} new posts to {posts_file}")
+
+    logger.info("Appended %d new posts to %s", len(new_posts), posts_file)

@@ -171,7 +171,7 @@ async def download_post_attachments(
             post_date = datetime.strptime(post["date"], "%Y-%m-%d")
             year = post_date.year
             month = f"{post_date.month:02d}"
-            folder_path = output_folder / "attachments" / str(year) / str(month)
+            folder_path = output_folder / "images" / str(year) / str(month)
 
             for attachment in post.get("attachments", []):
                 tasks.append(

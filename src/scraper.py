@@ -323,12 +323,18 @@ def extract_attachments(post_element):
         links = post_element.find_elements(
             By.XPATH, ".//a[@data-tag='post-attachment-link']"
         )
+        logger.debug("extract_attachments: found %d link(s).", len(links))
         attachments = []
         for link in links:
             url = link.get_attribute("href")  # Selenium resolves to absolute URL
             filename = link.text.strip()
+            if not filename:
+                # Fall back to the last path segment of the URL
+                filename = url.split("/")[-1].split("?")[0] if url else ""
             if url and filename:
                 attachments.append({"url": url, "filename": filename})
+            elif url:
+                logger.warning("Skipping attachment with no resolvable filename: %s", url)
         return attachments
     except NoSuchElementException:
         return []

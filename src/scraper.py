@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from src.config import Config
 from src.date_utils import parse_date
 from src.logger import get_logger
-from src.utils import download_post_images, save_posts_to_file
+from src.utils import download_post_attachments, download_post_images, save_posts_to_file
 
 logger = get_logger(__name__)
 
@@ -69,7 +69,9 @@ def scrape_artist_posts(driver, artist, control=None):
                     seen_post_ids.add(post_data["id"])
                     new_posts.append(post_data)
 
+            session_cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
             new_posts = asyncio.run(download_post_images(new_posts, artist_folder))
+            new_posts = asyncio.run(download_post_attachments(new_posts, artist_folder, session_cookies))
             save_posts_to_file(new_posts, artist_folder)
 
             if control is not None:
@@ -138,6 +140,7 @@ def extract_post_data(post_element, artist):
         tags = extract_post_tags(post_element, artist["tag_mapping"])
 
         images = extract_image_urls(post_element)
+        attachments = extract_attachments(post_element)
 
         url = get_element_attribute(
             post_element, ".//span[@data-tag='post-title']/a", "href"
@@ -150,6 +153,7 @@ def extract_post_data(post_element, artist):
             "date": date,
             "content": content,
             "images": images,
+            "attachments": attachments,
             "tags": tags,
             "url": url,
         }
@@ -304,6 +308,28 @@ def extract_image_urls(post_element):
         # Extract the 'src' attribute of each image element
         image_urls = [img.get_attribute("src") for img in all_image_elements]
         return image_urls
+    except NoSuchElementException:
+        return []
+
+
+def extract_attachments(post_element):
+    """
+    Extracts file attachments (e.g. PDFs) from a post.
+
+    :param post_element: WebElement representing a post.
+    :returns: list of dicts with 'url' and 'filename' keys.
+    """
+    try:
+        links = post_element.find_elements(
+            By.XPATH, ".//a[@data-tag='post-attachment-link']"
+        )
+        attachments = []
+        for link in links:
+            url = link.get_attribute("href")  # Selenium resolves to absolute URL
+            filename = link.text.strip()
+            if url and filename:
+                attachments.append({"url": url, "filename": filename})
+        return attachments
     except NoSuchElementException:
         return []
 

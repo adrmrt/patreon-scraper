@@ -121,6 +121,78 @@ async def download_post_images(posts: list[dict], output_folder: Path) -> list[d
     return posts
 
 
+async def download_attachment(session, url: str, filename: str, folder_path: Path) -> Path | None:
+    """
+    Downloads a single file attachment and saves it to folder_path.
+
+    :param session: An aiohttp ClientSession instance (must carry auth cookies).
+    :param url: Direct URL to the attachment.
+    :param filename: Filename to save as (taken from the link text).
+    :param folder_path: Destination folder.
+    :return: Absolute path to the saved file, or None on failure.
+    """
+    folder_path.mkdir(parents=True, exist_ok=True)
+    file_path = folder_path / sanitize_filename(filename)
+
+    if file_path.exists():
+        logger.debug("Skipping already downloaded file: %s", file_path)
+        return file_path
+
+    try:
+        async with session.get(url) as response:
+            if response.status == 200:
+                with open(file_path, "wb") as f:
+                    f.write(await response.read())
+                logger.debug("Downloaded: %s -> %s", url, file_path)
+                return file_path
+            else:
+                logger.warning("Failed to download %s: HTTP %s", url, response.status)
+    except Exception as e:
+        logger.error("Error downloading %s: %s", url, e)
+
+    return None
+
+
+async def download_post_attachments(
+    posts: list[dict], output_folder: Path, cookies: dict
+) -> list[dict]:
+    """
+    Download attachments for all posts and replace the attachment dicts with local paths.
+
+    :param posts: List of post dicts; each post["attachments"] is [{"url": ..., "filename": ...}, ...].
+    :param output_folder: Root output folder for the artist.
+    :param cookies: Selenium session cookies — required to authenticate Patreon file downloads.
+    :return: Posts with attachments replaced by relative path strings (failed downloads are dropped).
+    """
+    async with aiohttp.ClientSession(cookies=cookies) as session:
+        tasks = []
+
+        for post in posts:
+            post_date = datetime.strptime(post["date"], "%Y-%m-%d")
+            year = post_date.year
+            month = f"{post_date.month:02d}"
+            folder_path = output_folder / "attachments" / str(year) / str(month)
+
+            for attachment in post.get("attachments", []):
+                tasks.append(
+                    download_attachment(session, attachment["url"], attachment["filename"], folder_path)
+                )
+
+        downloaded_paths = await asyncio.gather(*tasks)
+
+        index = 0
+        for post in posts:
+            updated = []
+            for _ in post.get("attachments", []):
+                path = downloaded_paths[index]
+                if path is not None:
+                    updated.append(str(Path(path).relative_to(output_folder)))
+                index += 1
+            post["attachments"] = updated
+
+    return posts
+
+
 def save_posts_to_file(posts: list[dict], output_folder: Path) -> None:
     """
     Save posts to a JSON file, appending only new entries.

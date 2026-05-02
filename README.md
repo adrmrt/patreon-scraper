@@ -21,6 +21,10 @@ The output is a JSON file that has the following structure:
       "<string>",
       ...
     ],
+    "attachments": [
+      "<string>",
+      ...
+    ],
     "tags": [
       "<string>",
       ...
@@ -30,15 +34,16 @@ The output is a JSON file that has the following structure:
 ]
 ```
 
-| Field     | Type           | Description                                                                                                               |
-|-----------|----------------|---------------------------------------------------------------------------------------------------------------------------|
-| `id`      | `<string>`     | The Patreon id of this post. It's guaranteed unique.                                                                      |
-| `title`   | `<string>`     | The title of the post.                                                                                                    |
-| `date`    | `<YYYY-MM-DD>` | The publish date of the post. The format is always `YYYY-MM-DD`.                                                          |
-| `content` | `<string>`     | The body text of the post. Can be empty.                                                                                  |
-| `images`  | `<string>`     | The images of the post. It always uses the relative path to the parent folder of the output JSON file. Between 0 and `N`. |
-| `tags`    | `<string>`     | The tags of the post. Can be used to group or search posts. Between 0 and `M`.                                            |
-| `url`     | `<string>`     | The Patreon URL of the post.                                                                                              |
+| Field         | Type           | Description                                                                                                                          |
+|---------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `id`          | `<integer>`    | The Patreon id of this post. It's guaranteed unique.                                                                                 |
+| `title`       | `<string>`     | The title of the post.                                                                                                               |
+| `date`        | `<YYYY-MM-DD>` | The publish date of the post. The format is always `YYYY-MM-DD`.                                                                     |
+| `content`     | `<string>`     | The body text of the post. Can be empty.                                                                                             |
+| `images`      | `<string>`     | The images of the post. Relative path to the artist output folder. Between 0 and `N`.                                               |
+| `attachments` | `<string>`     | The file attachments of the post (e.g. PDFs). Relative path to the artist output folder, stored alongside images. Between 0 and `N`. |
+| `tags`        | `<string>`     | The tags of the post. Can be used to group or search posts. Between 0 and `M`.                                                       |
+| `url`         | `<string>`     | The Patreon URL of the post.                                                                                                         |
 
 
 ## Setup
@@ -95,7 +100,7 @@ pytest
 ## Roadmap
 
 - [x] Ability to scrape different artists in one run
-- [x] Download images of scraped posts and place them in `/{OUTPUT_FOLDER}/{ARTIST}/{IMAGES}/{YEAR}/{MONTH}/`
+- [x] Download images and attachments of scraped posts and place them in `/{OUTPUT_FOLDER}/{ARTIST}/images/{YEAR}/{MONTH}/`
 - [ ] Ability to store scraped posts in a database out of the box
 - [ ] More control over the scraping process, i.e. when the user wants to change the Patreon filters
 - [ ] GUI window to show scraped posts, including their images. Use scraped tags to filter and search.

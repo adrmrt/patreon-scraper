@@ -34,7 +34,9 @@ def _merge(current: list[dict], imported: list[dict]) -> tuple[list[dict], int]:
     """Return merged list and count of posts actually added."""
     current_ids = {post["id"] for post in current}  # set for O(1) lookup
     new_posts = [p for p in imported if p["id"] not in current_ids]
-    return current + new_posts, len(new_posts)  # current first: preserves existing order
+    return current + new_posts, len(
+        new_posts
+    )  # current first: preserves existing order
 
 
 def _move_images(new_posts: list[dict], source_artist: Path, dest_artist: Path) -> int:
@@ -80,20 +82,26 @@ def main():
         merged, added = _merge(current, imported)
 
         # Identify only the newly added posts to avoid copying images that already exist
-        new_posts = merged[len(current):]
+        new_posts = merged[len(current) :]
         source_artist = args.source / url_name
         dest_artist = Config.OUTPUT_FOLDER / url_name
 
         moved = _move_images(new_posts, source_artist, dest_artist)
 
-        dest_artist.mkdir(parents=True, exist_ok=True)  # artist folder may not exist yet
+        dest_artist.mkdir(
+            parents=True, exist_ok=True
+        )  # artist folder may not exist yet
         with open(current_file, "w") as f:
             json.dump(merged, f, indent=4)
 
         skipped = len(imported) - added
         logger.info(
             "[%s] %d imported, %d added, %d skipped (duplicates). %d image(s) moved.",
-            url_name, len(imported), added, skipped, moved,
+            url_name,
+            len(imported),
+            added,
+            skipped,
+            moved,
         )
 
 

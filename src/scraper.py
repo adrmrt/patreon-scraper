@@ -17,13 +17,14 @@ from src.utils import download_post_images, save_posts_to_file
 logger = get_logger(__name__)
 
 
-def scrape_artist_posts(driver, artist):
+def scrape_artist_posts(driver, artist, control=None):
     """
     Scrape posts from an artist's Patreon page, including loading more posts until the end.
     Handles consent modals or other obstructing elements.
 
     :param driver: Selenium WebDriver instance.
     :param artist: dict containing artist information with 'display_name' and 'url_name' keys.
+    :param control: optional ScraperControl for pause/skip/quit support.
     :returns: A list of dictionaries, each representing a post's data.
     """
     url_name = artist["url_name"]
@@ -70,6 +71,12 @@ def scrape_artist_posts(driver, artist):
 
             new_posts = asyncio.run(download_post_images(new_posts, artist_folder))
             save_posts_to_file(new_posts, artist_folder)
+
+            if control is not None:
+                control.check_input()
+                control.wait_if_paused()
+                if control.quit or control.skip_artist:
+                    break
 
             if not click_load_more(driver):
                 break

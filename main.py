@@ -1,6 +1,7 @@
 import time
 
 from src.config import Config
+from src.controls import ScraperControl, print_commands
 from src.driver import init_driver
 from src.logger import get_logger
 from src.login import login
@@ -22,6 +23,9 @@ def main():
         time.sleep(5)
 
         artists = load_artists(Config.ARTIST_FILE_PATH)
+        control = ScraperControl()
+        print_commands()
+
         for artist in artists:
             logger.info(
                 "Scraping posts for artist: %s (%s)",
@@ -31,28 +35,33 @@ def main():
             url = f"https://www.patreon.com/c/{artist['url_name']}/posts"
             driver.get(url)
 
-            wait_for_user_to_dismiss_consent()
+            wait_for_user_to_dismiss_consent(control)
 
-            while True:
-                scrape_artist_posts(driver, artist)
+            while True:  # Rescrape loop: repeats this artist until the user skips
+                scrape_artist_posts(driver, artist, control)
 
-                user_input = input(
+                if control.quit or control.skip_artist:
+                    control.reset_artist()  # Clear flag before moving to next artist
+                    break
+
+                user_input = control.prompt(
                     "Press Enter to scrape this artist again. "
                     "To skip to the next artist, press any other key and then Enter: "
                 )
 
                 if user_input.strip():
                     break
+
+            if control.quit:
+                break
     finally:
         logger.info("Scraping complete.")
+        # Always close the browser, even on error
         driver.close()
 
 
-def wait_for_user_to_dismiss_consent():
-    """
-    Waits for the user to manually dismiss the consent dialog.
-    """
-    input(
+def wait_for_user_to_dismiss_consent(control):
+    control.prompt(
         "Please dismiss the consent dialog (click the 'Reject non-essential' button) "
         "and press Enter to continue..."
     )

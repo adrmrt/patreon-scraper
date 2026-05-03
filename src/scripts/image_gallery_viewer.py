@@ -31,6 +31,17 @@ class ImageGallery:
         ) // self.images_per_page
 
         self._setup_ui()
+        self._center_window()
+
+    def _center_window(self):
+        self.root.update_idletasks()
+        w = self.root.winfo_reqwidth()
+        h = self.root.winfo_reqheight()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width - w) // 2
+        y = (screen_height - h) // 2
+        self.root.geometry(f"{w}x{h}+{x}+{y}")
 
     def _get_image_files(self, directory):
         """Recursively collect all image files from the directory."""
@@ -53,7 +64,7 @@ class ImageGallery:
             self.root, width=self.window_width, height=self.window_height
         )
         self.grid_frame.pack_propagate(False)
-        self.grid_frame.pack(fill="both", expand=True)
+        self.grid_frame.pack()
 
     def _setup_nav_frame(self):
         """Set up the navigation frame with page controls."""
@@ -108,17 +119,23 @@ class ImageGallery:
         for widget in self.grid_frame.winfo_children():
             widget.destroy()
 
-        # Calculate the size of each grid square
-        grid_width = self.window_width // self.cols
-        grid_height = self.window_height // self.rows
-        thumb_size = min(grid_width, grid_height) - 10
+        padding = 10
+        cell_width = self.window_width // self.cols
+        cell_height = self.window_height // self.rows
+        thumb_width = cell_width - padding
+        thumb_height = cell_height - padding
+
+        for i in range(self.rows):
+            self.grid_frame.rowconfigure(i, minsize=cell_height)
+        for j in range(self.cols):
+            self.grid_frame.columnconfigure(j, minsize=cell_width)
 
         start_idx = self.current_page * self.images_per_page
         end_idx = start_idx + self.images_per_page
         images_to_display = self.image_files[start_idx:end_idx]
 
         for idx, image_path in enumerate(images_to_display):
-            thumbnail = self._get_thumbnail(image_path, thumb_size)
+            thumbnail = self._get_thumbnail(image_path, thumb_width, thumb_height)
 
             if thumbnail:
                 lbl = Label(self.grid_frame, image=thumbnail)
@@ -126,21 +143,24 @@ class ImageGallery:
                 lbl.grid(
                     row=idx // self.cols,
                     column=idx % self.cols,
-                    padx=5,
-                    pady=5,
-                    sticky="nsew",
+                    padx=padding // 2,
+                    pady=padding // 2,
                 )
                 lbl.bind(
                     "<Double-1>", lambda event, p=image_path: self._show_full_image(p)
                 )
 
-    def _get_thumbnail(self, image_path, size):
+    def _get_thumbnail(self, image_path, width, height):
         """Create or retrieve a cached thumbnail for the given image path."""
         if image_path not in self.loaded_thumbnails:
             try:
-                image = Image.open(image_path)
-                image.thumbnail((size, size))
-                self.loaded_thumbnails[image_path] = ImageTk.PhotoImage(image)
+                image = Image.open(image_path).convert("RGB")
+                image.thumbnail((width, height))
+                canvas = Image.new("RGB", (width, height), (255, 255, 255))
+                offset_x = (width - image.width) // 2
+                offset_y = (height - image.height) // 2
+                canvas.paste(image, (offset_x, offset_y))
+                self.loaded_thumbnails[image_path] = ImageTk.PhotoImage(canvas)
             except Exception as e:
                 print(f"Error loading image {image_path}: {e}")
                 return None
@@ -221,3 +241,16 @@ class ImageGallery:
         """Handle the closing of an image window."""
         del self.open_windows[image_path]
         window.destroy()
+
+
+if __name__ == "__main__":
+    import sys
+    import tkinter as tk
+
+    if len(sys.argv) < 2:
+        print("Usage: python -m src.scripts.image_gallery_viewer <artist_directory>")
+        sys.exit(1)
+
+    root = tk.Tk()
+    app = ImageGallery(root, image_dir=sys.argv[1])
+    root.mainloop()

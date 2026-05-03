@@ -5,7 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     "selenium~=4.17.2",
     "python-dotenv~=1.0.1",
-    "requests~=2.32.0",
+    "requests~=2.33.1",
     "aiohttp~=3.11.7",
     "pillow~=11.0.0",
     "asyncio~=3.4.3",    

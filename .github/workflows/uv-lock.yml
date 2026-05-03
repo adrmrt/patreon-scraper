@@ -1,0 +1,20 @@
+name: Regenerate uv.lock
+on:
+  pull_request:
+    paths:
+      - "pyproject.toml"
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_PAT }}
+      - uses: astral-sh/setup-uv@v8
+      - run: uv lock
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Regenerate uv.lock

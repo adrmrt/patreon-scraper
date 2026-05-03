@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # Update pip dependencies weekly, but ignore major updates
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -7,12 +8,15 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types:
-          - "version-update:semver-patch"
-          - "version-update:semver-minor"
           - "version-update:semver-major"
     commit-message:
       prefix: "pip"
     open-pull-requests-limit: 10
+    groups:
+      python-packages:
+        patterns:
+          - "*"
+  # Update GitHub Actions dependencies weekly, but ignore major updates
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -20,6 +24,8 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types:
-          - "version-update:semver-patch"
-          - "version-update:semver-minor"
           - "version-update:semver-major"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
